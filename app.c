@@ -15,10 +15,12 @@ int main(int argc, const char *argv[]) {
     paths = realloc(paths, file_count * sizeof(char *));
 
     // Permite a view saber el size del shared memory
-    printf("%d\n", file_count);
-    sleep(SLEEP_TIME_FOR_VIEW);
 
     Shared_Memory shm = open_shared_memory(1, file_count);
+
+    sleep(SLEEP_TIME_FOR_VIEW);
+
+    printf("%d\n", file_count);
     
     Manager manager;
     manager.delivered_files = 0;
@@ -115,7 +117,7 @@ int main(int argc, const char *argv[]) {
         }
     }
 
-    close_shared_memory(shm.sem);
+    close_shared_memory(0, &shm);
     close(manager.results_fd);
     // Matar procesos esclavos
     for (int i = 0; i < manager.slave_count; i++) {
@@ -160,17 +162,17 @@ char ** check_args(int argc, const char *argv[], unsigned int * file_count){
 
 void handle_md5_response(char * md5, Shared_Memory * shm, unsigned int results_fd) {
     int bytes_written;
-    if ((bytes_written = sprintf(shm->address, "%s", md5)) < 0) {
+    if ((bytes_written = sprintf(shm->current_address, "%s", md5)) < 0) {
         _EXIT_WITH_ERROR("Writing in shared memory failed.");
     }
-    shm->address += bytes_written;
+    shm->current_address += bytes_written;
     write(results_fd, md5, bytes_written);
 
     //FIXME Printf momentaneo para visualizar la salida
-    printf("%s", md5);
+    // printf("%s", md5);
 
     if (sem_post(shm->sem) == -1) {
-        close_shared_memory(shm->sem);
+        close_shared_memory(1, shm);
         _EXIT_WITH_ERROR("Semaphore post failed.");
     }
 }   

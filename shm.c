@@ -18,30 +18,33 @@ Shared_Memory open_shared_memory(char create, unsigned int file_count) {
     int oflag = create ? OFLAG_CREATE_SHM : OFLAG_OPEN_SHM;
 
     if ((shm.fd = shm_open(SHM_NAME, oflag, MODE_SHM_AND_SEM)) == -1) {
-        _EXIT_WITH_ERROR("Shared Memory Creation Failed");
+        _EXIT_WITH_ERROR(create ? "Shared Memory Creation Failed" : "Shared Memory Opening Failed");
     }
     shm.size = file_count * SLAVE_BUFFER_SIZE;
-    if (ftruncate(shm.fd, shm.size) == -1) {
+    if (create && ftruncate(shm.fd, shm.size) == -1) {
         _EXIT_WITH_ERROR("Truncate Failed.\n");
     }
     if ((shm.address = mmap(NULL, shm.size, PROT_MMAP, MAP_SHARED, shm.fd, 0)) == MAP_FAILED) {
-        _EXIT_WITH_ERROR("Mapping Shared Memory Creation Failed.\n");
+        _EXIT_WITH_ERROR(create ? "Mapping Shared Memory Creation Failed" : "Mapping Shared Memory Opening Failed");
     }
-
+    shm.current_address = shm.address;
     shm.sem = open_semaphore(create);
     return shm;
 }
 
 //TODO Verificar si hay que desmappear tambien
-void close_shared_memory(sem_t * sem) {
+void close_shared_memory(char delete, Shared_Memory * shm) {
     // Eliminamos el shared memory que creamos
-    if (shm_unlink(SHM_NAME) == -1) {
+    if (munmap(shm->address, shm->size) == -1) {
+        _EXIT_WITH_ERROR("Shared Memory Unmapping Failed.");
+    }
+    if (delete && shm_unlink(SHM_NAME) == -1) {
         _EXIT_WITH_ERROR("Shared Memory Elimination Failed.");
     }
-    if (sem_close(sem) == -1) {
+    if (delete && sem_close(shm->sem) == -1) {
         _EXIT_WITH_ERROR("Closing sem failed.");
     }
-    if (sem_unlink(SEM_NAME) == -1) {
+    if (delete && sem_unlink(SEM_NAME) == -1) {
         _EXIT_WITH_ERROR("Unlink sem failed.");
     }
 }
