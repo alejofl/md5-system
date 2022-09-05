@@ -2,7 +2,8 @@
 #include "include/shm.h"
 
 char ** check_args(int argc, const char *argv[], unsigned int * file_count);
-void handle_md5_response(char * md5, Shared_Memory * shm);
+void handle_md5_response(char * md5, Shared_Memory * shm, unsigned int results_fd);
+unsigned int create_file_for_results();
 
 int main(int argc, const char *argv[]) {
     // Desactiva el buffer de STDOUT. 
@@ -23,6 +24,7 @@ int main(int argc, const char *argv[]) {
     manager.file_count = file_count;
     manager.slave_count = 0;
     manager.received_files = 0;
+    manager.results_fd = create_file_for_results();
 
     for (int i = 0; manager.delivered_files < manager.file_count && i < MAX_SLAVE_QTY; i++) {
         // Se crean los arrays para los File Descriptors de los pipes.
@@ -97,7 +99,7 @@ int main(int argc, const char *argv[]) {
                 
                 //FIXME Printf momentaneo para visualizar la salida
                 printf("%s", md5);
-                handle_md5_response(md5, &shm);
+                handle_md5_response(md5, &shm, manager.results_fd);
                 
                 //IMPORTANT: Si le mandas un write a un fd cerrado hay problemas.
                 if (manager.delivered_files != manager.file_count) {
@@ -113,6 +115,7 @@ int main(int argc, const char *argv[]) {
     }
 
     close_shared_memory(shm.sem);
+    close(manager.results_fd);
     // Matar procesos esclavos
     for (int i = 0; i < manager.slave_count; i++) {
         kill(manager.slave_pids[i], SIGKILL);
@@ -154,15 +157,31 @@ char ** check_args(int argc, const char *argv[], unsigned int * file_count){
     return paths;
 }
 
-void handle_md5_response(char * md5, Shared_Memory * shm) {
+void handle_md5_response(char * md5, Shared_Memory * shm, unsigned int results_fd) {
     int bytes_written;
     if ((bytes_written = sprintf(shm->address, "%s", md5)) < 0) {
         _EXIT_WITH_ERROR("Writing in shared memory failed.");
     }
     shm->address += bytes_written;
+    write(results_fd, md5, bytes_written);
 
     if (sem_post(shm->sem) == -1) {
         close_shared_memory(shm->sem);
         _EXIT_WITH_ERROR("Semaphore post failed.");
     }
 }   
+
+unsigned int create_file_for_results() {
+    unsigned int fd = open(RESULT_FILENAME, RESULT_FLAGS, RESULT_MODE);
+    if (fd == -1) {
+        _EXIT_WITH_ERROR("File creation failed.");
+    }
+    char header[SLAVE_BUFFER_SIZE];
+    int length = sprintf(header, "%-34s%-34s%-8s\n", "FILENAME", "MD5 HASH", "SLAVE ID");
+    write(fd, header, length);
+
+    //FIXME Printf momentaneo para visualizar la salida
+    printf(header);
+
+    return fd;
+}

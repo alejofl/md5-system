@@ -23,6 +23,10 @@
 #define MD5_COMMAND "md5sum "
 #define MD5_LENGTH 33
 
+#define RESULT_FILENAME "results.txt"
+#define RESULT_FLAGS (O_WRONLY | O_CREAT | O_CLOEXEC | O_TRUNC)
+#define RESULT_MODE (S_IRUSR | S_IWUSR)
+
 typedef struct {
     unsigned int delivered_files;
     unsigned int file_count;
@@ -31,6 +35,7 @@ typedef struct {
     pid_t slave_pids[MAX_SLAVE_QTY];
     // 0 Lectura ; 1 Escritura
     unsigned int fds[MAX_SLAVE_QTY][2];
+    unsigned int results_fd;
 } Manager;
 
 #endif

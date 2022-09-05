@@ -22,7 +22,7 @@ int main(int argc, char const *argv[]) {
         md5[MD5_LENGTH - 1] = 0;
 
         pclose(md5_ans);
-        printf("%s\t%s\t%d\n", file_name, md5, getpid());  
+        printf("%-34s%-34s%-8d\n", file_name, md5, getpid());  
     }
     
     //IMPORTANT: getline() cuando lo llamas con NULL, 0, ... hace el malloc, por eso se debe hacer el free()
