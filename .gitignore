@@ -13,3 +13,6 @@ slave
 app
 view
 vista
+
+# Result files
+results.txt
