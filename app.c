@@ -106,12 +106,12 @@ int main(int argc, const char *argv[]) {
                     }
                 }
                 //TODO Printf momentaneo para visualizar la salida
-                printf("%s\n", md5);
+                printf("%s", md5);
                 //IMPORTANT: Si le mandas un write a un fd cerrado hay problemas.
                 if(manager.delivered_files != manager.file_count){
                     write(manager.fds[i][1], paths[manager.delivered_files], strlen(paths[manager.delivered_files])); 
                     manager.delivered_files++;
-                    write(manager.fds[i][1], "\n", 1); 
+                    write(manager.fds[i][1], "\n", 1);
                 }
             }
         }

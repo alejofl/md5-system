@@ -9,6 +9,7 @@
 #include <string.h>
 #include <sys/select.h>
 #include <signal.h>
+#include <sys/wait.h>
 
 
 #define _EXIT_WITH_ERROR(s) {\
