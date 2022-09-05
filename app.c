@@ -4,29 +4,8 @@ int main(int argc, const char *argv[]) {
     // Desactiva el buffer de STDOUT. 
     setvbuf(stdout, NULL, _IONBF, 0);
 
-    if (argc < 2) {
-        _EXIT_WITH_ERROR("No files to process.")
-        return 1;
-    }
-
-    // Chequeamos si archivo existe y es un archivo (no directorios)
     unsigned int file_count;
-    char ** paths = malloc(BLOCK_QTY * sizeof(char *)); // TODO: Chequear si tiene que ir acá el malloc.
-    struct stat stats;
-    for (int i = 1; i < argc; i++) {
-        int response = stat(argv[i], &stats);
-        if (response == 0) {
-            if (S_ISREG(stats.st_mode)) {
-                if (file_count % BLOCK_QTY == 0) {
-                    paths = realloc(paths, (file_count + BLOCK_QTY) * sizeof(char *));
-                }
-                char * str = malloc(strlen(argv[i]));
-                paths[file_count++] = strcpy(str, argv[i]);
-            }
-        } else {
-            fprintf(stderr, "Can't open file %s, skipping.", argv[i]);
-        }
-    }
+    char ** paths = check_args(argc, argv, &file_count);
 
     paths = realloc(paths, file_count * sizeof(char *));
     Manager manager;
@@ -92,7 +71,7 @@ int main(int argc, const char *argv[]) {
             }
         }
 
-        int ready_fds = select(nfds + 1, &read_fds, NULL, NULL, NULL);
+        select(nfds + 1, &read_fds, NULL, NULL, NULL);
         char md5[255];
 
         for(int i = 0; i < manager.slave_count; i++){
@@ -122,5 +101,36 @@ int main(int argc, const char *argv[]) {
         kill(manager.slave_pids[i], SIGKILL);
     }
 
+    // Free del malloc de paths
+    free(paths);
+
     return 0;
+}
+
+// TODO: Chequear si tiene que ir acá el malloc.
+char ** check_args(int argc, const char *argv[], unsigned int * file_count){
+    // Chequeamos cantidad de argumentos.
+    if (argc < 2) {
+        _EXIT_WITH_ERROR("No files to process.");
+    }
+
+    // Chequeamos si archivo existe y es un archivo (no directorios).
+    struct stat stats;
+    char ** paths = malloc(BLOCK_QTY * sizeof(char *));
+    
+    for (int i = 1; i < argc; i++) {
+        int response = stat(argv[i], &stats);
+        if (response == 0) {
+            if (S_ISREG(stats.st_mode)) {
+                if (*file_count % BLOCK_QTY == 0) {
+                    paths = realloc(paths, (*file_count + BLOCK_QTY) * sizeof(char *));
+                }
+                char * str = malloc(strlen(argv[i]));
+                paths[(*file_count)++] = strcpy(str, argv[i]);
+            }
+        } else {
+            fprintf(stderr, "Can't open file %s, skipping.", argv[i]);
+        }
+    }
+    return paths;
 }

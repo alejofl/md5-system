@@ -29,4 +29,6 @@ typedef struct {
     unsigned int fds[MAX_SLAVE_QTY][2];
 } Manager;
 
+char ** check_args(int argc, const char *argv[], unsigned int * file_count);
+
 #endif
