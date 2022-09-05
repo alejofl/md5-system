@@ -1,5 +1,12 @@
+# VS Code
 .vscode/**
+
+# macOS
 .DS_Store
+.AppleDouble
+.LSOverride
+
+# Binaries
 md5
 slave
 app
