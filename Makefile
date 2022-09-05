@@ -1,10 +1,10 @@
 .SILENT: all debug app slave view clean
 
-GCC := gcc -Wall -std=c99
+GCC := gcc -Wall -std=c99 -pthread -lrt 
 debug: DEBUGFLAG := -g
 
 .PHONY: all
-all: app slave view
+all: clean app slave view
 
 .PHONY: debug
 debug: all
