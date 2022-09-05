@@ -4,6 +4,7 @@
 char ** check_args(int argc, const char *argv[], unsigned int * file_count);
 void handle_md5_response(char * md5, Shared_Memory * shm, unsigned int results_fd);
 unsigned int create_file_for_results();
+void write_header(Shared_Memory * shm, unsigned int results_fd);
 
 int main(int argc, const char *argv[]) {
     // Desactiva el buffer de STDOUT. 
@@ -25,6 +26,8 @@ int main(int argc, const char *argv[]) {
     manager.slave_count = 0;
     manager.received_files = 0;
     manager.results_fd = create_file_for_results();
+
+    write_header(&shm, manager.results_fd);
 
     for (int i = 0; manager.delivered_files < manager.file_count && i < MAX_SLAVE_QTY; i++) {
         // Se crean los arrays para los File Descriptors de los pipes.
@@ -97,8 +100,6 @@ int main(int argc, const char *argv[]) {
                     }
                 }
                 
-                //FIXME Printf momentaneo para visualizar la salida
-                printf("%s", md5);
                 handle_md5_response(md5, &shm, manager.results_fd);
                 
                 //IMPORTANT: Si le mandas un write a un fd cerrado hay problemas.
@@ -165,6 +166,9 @@ void handle_md5_response(char * md5, Shared_Memory * shm, unsigned int results_f
     shm->address += bytes_written;
     write(results_fd, md5, bytes_written);
 
+    //FIXME Printf momentaneo para visualizar la salida
+    printf("%s", md5);
+
     if (sem_post(shm->sem) == -1) {
         close_shared_memory(shm->sem);
         _EXIT_WITH_ERROR("Semaphore post failed.");
@@ -176,12 +180,11 @@ unsigned int create_file_for_results() {
     if (fd == -1) {
         _EXIT_WITH_ERROR("File creation failed.");
     }
-    char header[SLAVE_BUFFER_SIZE];
-    int length = sprintf(header, "%-34s%-34s%-8s\n", "FILENAME", "MD5 HASH", "SLAVE ID");
-    write(fd, header, length);
-
-    //FIXME Printf momentaneo para visualizar la salida
-    printf(header);
-
     return fd;
+}
+
+void write_header(Shared_Memory * shm, unsigned int results_fd) {
+    char header[SLAVE_BUFFER_SIZE];
+    sprintf(header, "%-34s%-34s%-8s\n", "FILENAME", "MD5 HASH", "SLAVE ID");
+    handle_md5_response(header, shm, results_fd);
 }
