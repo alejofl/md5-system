@@ -89,21 +89,26 @@ int main(int argc, const char *argv[]) {
         }
 
         select(nfds + 1, &read_fds, NULL, NULL, NULL);
+        char read_str[SLAVE_BUFFER_SIZE * 2];
         char md5[SLAVE_BUFFER_SIZE];
 
         for (int i = 0; i < manager.slave_count && manager.received_files < manager.file_count; i++) {
             // Con esto sabemos los slaves que terminaron el md5 y podemos mandarles mas
             if (FD_ISSET(manager.fds[i][0], &read_fds) != 0) {
-                ssize_t read_ans = read(manager.fds[i][0], md5, SLAVE_BUFFER_SIZE - 1);
-                md5[read_ans] = 0;
-                for (int i = 0; i < strlen(md5); i++) {
-                    if(md5[i] == '\n'){
+                ssize_t read_ans = read(manager.fds[i][0], read_str, SLAVE_BUFFER_SIZE - 1);
+                read_str[read_ans] = 0;
+
+                int md5_idx = 0;
+                for (int i = 0; i < read_ans; i++) {
+                    md5[md5_idx++] = read_str[i];
+                    if (read_str[i] == '\n') {
                         manager.received_files++;
+                        md5[md5_idx] = 0;
+                        md5_idx = 0;
+                        handle_md5_response(md5, &shm, manager.results_fd);
                     }
                 }
-                
-                handle_md5_response(md5, &shm, manager.results_fd);
-                
+
                 //IMPORTANT: Si le mandas un write a un fd cerrado hay problemas.
                 if (manager.delivered_files != manager.file_count) {
                     write(manager.fds[i][1], paths[manager.delivered_files], strlen(paths[manager.delivered_files])); 
@@ -111,13 +116,13 @@ int main(int argc, const char *argv[]) {
                     manager.delivered_files++;
                 }
             }
-            // TODO Printf momentanemo para visualizar datos
+            //FIXME printf momentanemo para visualizar datos
             // printf("Received files %d\n", manager.received_files);
             // printf("Total: %d\n", manager.file_count);
         }
     }
 
-    close_shared_memory(0, &shm);
+    close_shared_memory(1, &shm);
     close(manager.results_fd);
     // Matar procesos esclavos
     for (int i = 0; i < manager.slave_count; i++) {
@@ -141,7 +146,7 @@ char ** check_args(int argc, const char *argv[], unsigned int * file_count){
 
     // Chequeamos si archivo existe y es un archivo (no directorios).
     struct stat stats;
-    char ** paths = malloc(BLOCK_QTY * sizeof(char *)); // TODO: Chequear si tiene que ir acá el malloc.
+    char ** paths = malloc(BLOCK_QTY * sizeof(char *)); //TODO: Chequear si tiene que ir acá el malloc.
     
     for (int i = 1; i < argc; i++) {
         int response = stat(argv[i], &stats);
@@ -167,9 +172,6 @@ void handle_md5_response(char * md5, Shared_Memory * shm, unsigned int results_f
     }
     shm->current_address += bytes_written;
     write(results_fd, md5, bytes_written);
-
-    //FIXME Printf momentaneo para visualizar la salida
-    // printf("%s", md5);
 
     if (sem_post(shm->sem) == -1) {
         close_shared_memory(1, shm);

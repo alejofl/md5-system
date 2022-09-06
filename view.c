@@ -15,16 +15,11 @@ int main(int argc, char const *argv[]) {
         scanf("%d", &file_count);
     }
 
-    printf("%d\n", file_count);
-
     Shared_Memory shm = open_shared_memory(0, file_count);
 
-    for (int i = 0; i < file_count; i++) {
+    // El +1 va por el header.
+    for (int i = 0; i < file_count + 1; i++) {
         sem_wait(shm.sem);
-
-        int sem;
-        sem_getvalue(shm.sem, &sem);
-        printf("SEMAFORO %d\n", sem);
 
         char to_print[SLAVE_BUFFER_SIZE];
         int bytes_read = 0;
@@ -39,7 +34,7 @@ int main(int argc, char const *argv[]) {
         printf("%s", to_print);
     }
 
-    close_shared_memory(1, &shm);
+    close_shared_memory(0, &shm);
     
     return 0;
 }

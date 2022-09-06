@@ -32,7 +32,6 @@ Shared_Memory open_shared_memory(char create, unsigned int file_count) {
     return shm;
 }
 
-//TODO Verificar si hay que desmappear tambien
 void close_shared_memory(char delete, Shared_Memory * shm) {
     // Eliminamos el shared memory que creamos
     if (munmap(shm->address, shm->size) == -1) {
@@ -41,7 +40,7 @@ void close_shared_memory(char delete, Shared_Memory * shm) {
     if (delete && shm_unlink(SHM_NAME) == -1) {
         _EXIT_WITH_ERROR("Shared Memory Elimination Failed.");
     }
-    if (delete && sem_close(shm->sem) == -1) {
+    if (sem_close(shm->sem) == -1) {
         _EXIT_WITH_ERROR("Closing sem failed.");
     }
     if (delete && sem_unlink(SEM_NAME) == -1) {

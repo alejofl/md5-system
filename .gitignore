@@ -14,5 +14,9 @@ app
 view
 vista
 
+# Tests
+tests
+tests/**
+
 # Result files
 results.txt
