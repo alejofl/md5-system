@@ -77,7 +77,7 @@ int main(int argc, const char *argv[]) {
 
     // Escuchamos a los slaves
     while (manager.received_files < manager.file_count) {
-        fd_set read_fds;
+        fd_set read_fds = {};
         int nfds = 0;
 
         // Agregamos todos los fds al fd_set
@@ -155,7 +155,7 @@ char ** check_args(int argc, const char *argv[], unsigned int * file_count){
                 if (*file_count % BLOCK_QTY == 0) {
                     paths = realloc(paths, (*file_count + BLOCK_QTY) * sizeof(char *));
                 }
-                char * str = malloc(strlen(argv[i]));
+                char * str = malloc(strlen(argv[i]) + 1); // El +1 es para el \0;
                 paths[(*file_count)++] = strcpy(str, argv[i]);
             }
         } else {
