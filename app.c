@@ -1,3 +1,6 @@
+// This is a personal academic project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 #include "include/lib.h"
 #include "include/shm.h"
 
@@ -12,7 +15,12 @@ int main(int argc, const char *argv[]) {
 
     unsigned int file_count = 0;
     char ** paths = check_args(argc, argv, &file_count);
-    paths = realloc(paths, file_count * sizeof(char *));
+    char ** tmp_ptr = realloc(paths, file_count * sizeof(char *)); //PVS-Studio suggestion
+    if (tmp_ptr == NULL) {
+        _EXIT_WITH_ERROR("Memory allocation error.");
+    } else {
+        paths = tmp_ptr;
+    }
 
     // Permite a view saber el size del shared memory
 
@@ -20,7 +28,7 @@ int main(int argc, const char *argv[]) {
 
     sleep(SLEEP_TIME_FOR_VIEW);
 
-    printf("%d\n", file_count);
+    printf("%u\n", file_count);
     
     Manager manager;
     manager.delivered_files = 0;
@@ -94,9 +102,13 @@ int main(int argc, const char *argv[]) {
 
         for (int i = 0; i < manager.slave_count && manager.received_files < manager.file_count; i++) {
             // Con esto sabemos los slaves que terminaron el md5 y podemos mandarles mas
-            if (FD_ISSET(manager.fds[i][0], &read_fds) != 0) {
+            if (FD_ISSET(manager.fds[i][0], &read_fds)) {
                 ssize_t read_ans = read(manager.fds[i][0], read_str, SLAVE_BUFFER_SIZE - 1);
-                read_str[read_ans] = 0;
+                if (read_ans == -1) {
+                    _EXIT_WITH_ERROR("Error while reading slave output.");
+                } else {
+                    read_str[read_ans] = 0;
+                }
 
                 int md5_idx = 0;
                 for (int i = 0; i < read_ans; i++) {
@@ -146,16 +158,27 @@ char ** check_args(int argc, const char *argv[], unsigned int * file_count){
 
     // Chequeamos si archivo existe y es un archivo (no directorios).
     struct stat stats;
-    char ** paths = malloc(BLOCK_QTY * sizeof(char *)); //TODO: Chequear si tiene que ir acá el malloc.
-    
+    char ** paths = malloc(BLOCK_QTY * sizeof(char *));
+    if (paths == NULL) {
+        _EXIT_WITH_ERROR("Memory allocation error.");
+    }
+
     for (int i = 1; i < argc; i++) {
         int response = stat(argv[i], &stats);
         if (response == 0) {
             if (S_ISREG(stats.st_mode)) {
                 if (*file_count % BLOCK_QTY == 0) {
-                    paths = realloc(paths, (*file_count + BLOCK_QTY) * sizeof(char *));
+                    char ** tmp_ptr = realloc(paths, (*file_count + BLOCK_QTY) * sizeof(char *)); //PVS-Studio suggestion
+                    if (tmp_ptr == NULL) {
+                        _EXIT_WITH_ERROR("Memory allocation error.");
+                    } else {
+                        paths = tmp_ptr;
+                    }
                 }
                 char * str = malloc(strlen(argv[i]) + 1); // El +1 es para el \0;
+                if (str == NULL) {
+                    _EXIT_WITH_ERROR("Memory allocation error.");
+                }
                 paths[(*file_count)++] = strcpy(str, argv[i]);
             }
         } else {

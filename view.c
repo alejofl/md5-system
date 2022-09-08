@@ -1,3 +1,6 @@
+// This is a personal academic project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 #include "include/lib.h"
 #include "include/shm.h"
 
@@ -8,11 +11,11 @@ int main(int argc, char const *argv[]) {
     // Obtengo la cantidad de archivos
     unsigned int file_count;
     if (argc == 2) {
-        sscanf(argv[1], "%d", &file_count);
+        sscanf(argv[1], "%u", &file_count);
     } else if (argc > 2) {
         _EXIT_WITH_ERROR("Too many arguments for view.");
     } else {
-        scanf("%d", &file_count);
+        scanf("%u", &file_count);
     }
 
     Shared_Memory shm = open_shared_memory(0, file_count);

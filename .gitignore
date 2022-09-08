@@ -20,3 +20,8 @@ tests/**
 
 # Result files
 results.txt
+
+# PVS-Studio
+PVS-Studio.log
+report.tasks
+strace_out
