@@ -1,6 +1,10 @@
 #ifndef SHM_H
 #define SHM_H
 
+#ifndef _BSD_SOURCE
+#define _BSD_SOURCE
+#endif
+
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/mman.h>
