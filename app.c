@@ -128,9 +128,6 @@ int main(int argc, const char *argv[]) {
                     manager.delivered_files++;
                 }
             }
-            //FIXME printf momentanemo para visualizar datos
-            // printf("Received files %d\n", manager.received_files);
-            // printf("Total: %d\n", manager.file_count);
         }
     }
 

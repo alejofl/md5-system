@@ -3,7 +3,6 @@
 
 #include "include/lib.h"
 
-// TODO: MANEJO DE ERRORES DE POPEN Y PCLOSE
 int main(int argc, char const *argv[]) {
     // Desactiva el buffer de STDOUT. 
     setvbuf(stdout, NULL, _IONBF, 0);

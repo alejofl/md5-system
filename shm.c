@@ -9,7 +9,7 @@ sem_t * open_semaphore(char create) {
     
     sem_t * semaphore = sem_open(SEM_NAME, oflag, MODE_SHM_AND_SEM, DEF_SEM_VAL);
     if (semaphore == SEM_FAILED) {
-        _EXIT_WITH_ERROR("Semaphore creation failed.");
+        _EXIT_WITH_ERROR(create ? "Semaphore Creation Failed" : "Semaphore Opening Failed");
     }
 
     return semaphore;
