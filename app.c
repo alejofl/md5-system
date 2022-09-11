@@ -26,9 +26,9 @@ int main(int argc, const char *argv[]) {
 
     Shared_Memory shm = open_shared_memory(1, file_count);
 
-    sleep(SLEEP_TIME_FOR_VIEW);
-
     printf("%u\n", file_count);
+
+    sleep(SLEEP_TIME_FOR_VIEW);
     
     Manager manager;
     manager.delivered_files = 0;
