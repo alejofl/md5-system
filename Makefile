@@ -1,4 +1,4 @@
-.SILENT: all debug app slave view clean clean-pvs clean-all check-pvs-aux check-pvs
+.SILENT: all debug app slave view clean clean-pvs clean-shm clean-all check-pvs-aux check-pvs
 
 GCC := gcc -Wall -std=c99 -pthread -lrt
 debug: DEBUGFLAG := -g
@@ -25,6 +25,10 @@ clean:
 .PHONY: clean-pvs
 clean-pvs:
 	rm -f PVS-Studio.log report.tasks strace_out
+
+.PHONY: clean-shm
+clean-shm:
+	rm -f /dev/shm/md5_shm /dev/shm/sem.md5_ready
 
 .PHONY: clean-all
 clean-all: clean clean-pvs

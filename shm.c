@@ -36,7 +36,6 @@ Shared_Memory open_shared_memory(char create, unsigned int file_count) {
 }
 
 void close_shared_memory(char delete, Shared_Memory * shm) {
-    // Eliminamos el shared memory que creamos
     if (munmap(shm->address, shm->size) == -1) {
         _EXIT_WITH_ERROR("Shared Memory Unmapping Failed.");
     }

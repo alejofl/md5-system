@@ -15,14 +15,12 @@ int main(int argc, const char *argv[]) {
 
     unsigned int file_count = 0;
     char ** paths = check_args(argc, argv, &file_count);
-    char ** tmp_ptr = realloc(paths, file_count * sizeof(char *)); //PVS-Studio suggestion
+    char ** tmp_ptr = realloc(paths, file_count * sizeof(char *));
     if (tmp_ptr == NULL) {
         _EXIT_WITH_ERROR("Memory allocation error.");
     } else {
         paths = tmp_ptr;
     }
-
-    // Permite a view saber el size del shared memory
 
     Shared_Memory shm = open_shared_memory(1, file_count);
 
@@ -40,7 +38,6 @@ int main(int argc, const char *argv[]) {
     write_header(&shm, manager.results_fd);
 
     for (int i = 0; manager.delivered_files < manager.file_count && i < MAX_SLAVE_QTY; i++) {
-        // Se crean los arrays para los File Descriptors de los pipes.
         int app_to_slave[2];
         int slave_to_app[2];
 
@@ -48,19 +45,16 @@ int main(int argc, const char *argv[]) {
             _EXIT_WITH_ERROR("Error in pipe(). Try again.")
         }
         pid_t child_pid = fork();
-        if (child_pid == 0) { // Es el proceso hijo.
-            // Cierro FDs innecesarios.
+        if (child_pid == 0) {
             close(app_to_slave[1]);
             close(slave_to_app[0]);
 
-            // Para el slave se vuelve transparente el pipe.
             dup2(app_to_slave[0], 0);
             dup2(slave_to_app[1], 1);
 
             execv("slave", (char **){NULL});
             _EXIT_WITH_ERROR("Error in execv(). Try again.");
-        } else if (child_pid > 0) { // Es el proceso padre.
-            // Cierro FDs innecesarios
+        } else if (child_pid > 0) {
             close(app_to_slave[0]);
             close(slave_to_app[1]);
 
@@ -69,7 +63,6 @@ int main(int argc, const char *argv[]) {
             manager.fds[i][0] = slave_to_app[0];
             manager.fds[i][1] = app_to_slave[1];
 
-            // Envío paths de archivos.
             write(manager.fds[i][1], paths[manager.delivered_files], strlen(paths[manager.delivered_files]));
             write(manager.fds[i][1], "\n", 1); 
             manager.delivered_files++;
@@ -83,12 +76,10 @@ int main(int argc, const char *argv[]) {
         } 
     }
 
-    // Escuchamos a los slaves
     while (manager.received_files < manager.file_count) {
         fd_set read_fds = {};
         int nfds = 0;
 
-        // Agregamos todos los fds al fd_set
         for (int i = 0; i < manager.slave_count; i++) {
             FD_SET(manager.fds[i][0], &read_fds); 
             if (nfds < manager.fds[i][0]) {
@@ -101,7 +92,6 @@ int main(int argc, const char *argv[]) {
         char md5[SLAVE_BUFFER_SIZE];
 
         for (int i = 0; i < manager.slave_count && manager.received_files < manager.file_count; i++) {
-            // Con esto sabemos los slaves que terminaron el md5 y podemos mandarles mas
             if (FD_ISSET(manager.fds[i][0], &read_fds)) {
                 ssize_t read_ans = read(manager.fds[i][0], read_str, SLAVE_BUFFER_SIZE - 1);
                 if (read_ans == -1) {
@@ -121,7 +111,6 @@ int main(int argc, const char *argv[]) {
                     }
                 }
 
-                //IMPORTANT: Si le mandas un write a un fd cerrado hay problemas.
                 if (manager.delivered_files != manager.file_count) {
                     write(manager.fds[i][1], paths[manager.delivered_files], strlen(paths[manager.delivered_files])); 
                     write(manager.fds[i][1], "\n", 1);
@@ -133,12 +122,10 @@ int main(int argc, const char *argv[]) {
 
     close_shared_memory(1, &shm);
     close(manager.results_fd);
-    // Matar procesos esclavos
     for (int i = 0; i < manager.slave_count; i++) {
         kill(manager.slave_pids[i], SIGKILL);
     }
 
-    // Free del malloc de paths
     for (int i = 0; i < manager.file_count; i++) {
         free(paths[i]);
     }
@@ -148,12 +135,10 @@ int main(int argc, const char *argv[]) {
 }
 
 char ** check_args(int argc, const char *argv[], unsigned int * file_count){
-    // Chequeamos cantidad de argumentos.
     if (argc < 2) {
         _EXIT_WITH_ERROR("No files to process.");
     }
 
-    // Chequeamos si archivo existe y es un archivo (no directorios).
     struct stat stats;
     char ** paths = malloc(BLOCK_QTY * sizeof(char *));
     if (paths == NULL) {
@@ -165,7 +150,7 @@ char ** check_args(int argc, const char *argv[], unsigned int * file_count){
         if (response == 0) {
             if (S_ISREG(stats.st_mode)) {
                 if (*file_count % BLOCK_QTY == 0) {
-                    char ** tmp_ptr = realloc(paths, (*file_count + BLOCK_QTY) * sizeof(char *)); //PVS-Studio suggestion
+                    char ** tmp_ptr = realloc(paths, (*file_count + BLOCK_QTY) * sizeof(char *));
                     if (tmp_ptr == NULL) {
                         _EXIT_WITH_ERROR("Memory allocation error.");
                     } else {

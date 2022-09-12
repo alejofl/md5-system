@@ -8,7 +8,6 @@ int main(int argc, char const *argv[]) {
     // Desactiva el buffer de STDOUT. 
     setvbuf(stdout, NULL, _IONBF, 0);
 
-    // Obtengo la cantidad de archivos
     unsigned int file_count;
     if (argc == 2) {
         sscanf(argv[1], "%u", &file_count);
