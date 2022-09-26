@@ -16,6 +16,8 @@
 #define SEM_NAME    "md5_ready"
 #define DEF_SEM_VAL 0
 
+#define FIFO_NAME "md5_fifo"
+
 #define OFLAG_CREATE_SHM (O_CREAT | O_EXCL | O_RDWR)
 #define OFLAG_OPEN_SHM (O_RDWR)
 #define OFLAG_CREATE_SEM (O_CREAT | O_EXCL | O_RDWR)
@@ -29,6 +31,8 @@ typedef struct {
     void * current_address;
     int size;
     sem_t * sem;
+    // 0: view | 1: app
+    int fifo_fds[2];
 } Shared_Memory;
 
 sem_t * open_semaphore(char create);

@@ -22,9 +22,9 @@ int main(int argc, const char *argv[]) {
         paths = tmp_ptr;
     }
 
-    Shared_Memory shm = open_shared_memory(1, file_count);
-
     printf("%u\n", file_count);
+
+    Shared_Memory shm = open_shared_memory(1, file_count);
 
     sleep(SLEEP_TIME_FOR_VIEW);
     
@@ -177,6 +177,9 @@ void handle_md5_response(char * md5, Shared_Memory * shm, unsigned int results_f
     }
     shm->current_address += bytes_written;
     write(results_fd, md5, bytes_written);
+
+    // WRITE TO FIFO
+    write(shm->fifo_fds[1], md5, bytes_written);
 
     if (sem_post(shm->sem) == -1) {
         close_shared_memory(1, shm);

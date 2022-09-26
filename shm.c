@@ -31,6 +31,29 @@ Shared_Memory open_shared_memory(char create, unsigned int file_count) {
         _EXIT_WITH_ERROR(create ? "Mapping Shared Memory Creation Failed" : "Mapping Shared Memory Opening Failed");
     }
     shm.current_address = shm.address;
+
+    // Named pipe
+    if (create) {
+        int result = mkfifo(FIFO_NAME, MODE_SHM_AND_SEM);
+        if (result == -1) {
+            _EXIT_WITH_ERROR("FIFO error.");
+        }
+        // Open FIFO
+        int fifo_fd = open(FIFO_NAME, O_WRONLY);
+        if (fifo_fd == -1) {
+            _EXIT_WITH_ERROR("FIFO opening error");
+        }
+        shm.fifo_fds[1] = fifo_fd;
+    } else {
+        int fifo_fd = open(FIFO_NAME, O_RDONLY);
+        if (fifo_fd == -1) {
+            _EXIT_WITH_ERROR("FIFO opening error");
+        }
+        shm.fifo_fds[0] = fifo_fd;
+    }
+    
+
+
     shm.sem = open_semaphore(create);
     return shm;
 }

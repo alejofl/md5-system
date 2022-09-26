@@ -25,13 +25,20 @@ int main(int argc, char const *argv[]) {
 
         char to_print[SLAVE_BUFFER_SIZE];
         int bytes_read = 0;
-        while (((char *) shm.current_address)[bytes_read] != '\n') {
-            to_print[bytes_read] = ((char *) shm.current_address)[bytes_read];
+        // while (((char *) shm.current_address)[bytes_read] != '\n') {
+        //     to_print[bytes_read] = ((char *) shm.current_address)[bytes_read];
+        //     bytes_read++;
+        // }
+        char read_str[1];
+        do {
+            read(shm.fifo_fds[0], read_str, 1);
+            to_print[bytes_read] = read_str[0];
             bytes_read++;
-        }
-        to_print[bytes_read++] = '\n';
+        } while (read_str[0] != '\n');
+
+        // to_print[bytes_read++] = '\n';
         to_print[bytes_read] = 0;
-        shm.current_address += bytes_read;
+        // shm.current_address += bytes_read;
 
         printf("%s", to_print);
     }
